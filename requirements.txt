@@ -4,4 +4,3 @@ torch
 torchvision
 streamlit
 streamlit_webrtc
-tempfile
