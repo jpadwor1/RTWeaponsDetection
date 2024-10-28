@@ -1,9 +1,7 @@
 import cv2
 from ultralytics import YOLO
-import torch
 import streamlit as st
-import tempfile
-import os
+
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
 
 # Load the YOLO model
@@ -68,7 +66,7 @@ if selectedDevice != "Webcam":
             with open(video_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
         elif selectedDevice == "Sample Video":
-            video_path = "./videos/gun.mp4"
+            video_path = "./gun.mp4"
         
         # Process video if available
         if video_path:
