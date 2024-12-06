@@ -3,9 +3,10 @@ from ultralytics import YOLO
 import streamlit as st
 import tempfile
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+import time
 
 # Load the YOLO model
-model = YOLO("best.pt")
+model = YOLO("firearm.pt")
 
 class VideoTransformer(VideoTransformerBase):
     def transform(self, frame):
@@ -34,23 +35,21 @@ selectedDevice = col1.radio(
 )
 
 if selectedDevice == "Firearm":
-    model = YOLO("best.pt")
+    model = YOLO("firearm.pt")
 else:
     model = YOLO("yolo11n.pt")
 
 col2.title("Select a Video Source")
 selectedDevice = col2.radio(
     "What input video source would you like to use?",
-    ["Webcam", "Upload a video", "Sample Video"],
+    ["Upload a video", "Sample Video"],
     help="Select the video source for object detection."
 )
 
+
+
 if selectedDevice == "Upload a video":
     uploaded_file = st.file_uploader("Choose a video...", type=["mp4", "avi"])
-
-if selectedDevice == "Webcam":
-    st.info("Please grant the required permissions to access the webcam.")
-    webrtc_streamer(key="example", video_processor_factory=VideoTransformer)
 
 btnCol1, btnCol2 = st.columns([1, 1])
 
@@ -60,13 +59,14 @@ if selectedDevice != "Webcam":
     start = btnCol2.button("Start", type="primary", use_container_width=True)
 
     if start:
+        start_time = time.time()
         video_path = None
         if selectedDevice == "Upload a video" and uploaded_file is not None:
             with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_file:
                 temp_file.write(uploaded_file.getbuffer())
                 video_path = temp_file.name
         elif selectedDevice == "Sample Video":
-            video_path = "./gun.mp4"
+            video_path = "./gun2.mp4"
         
         # Process video if available
         if video_path:
@@ -78,15 +78,23 @@ if selectedDevice != "Webcam":
 
                 # Use an empty slot to overwrite frames continuously
                 frame_display = st.empty()
-
+                count=0
                 while cap.isOpened():
                     success, frame = cap.read()
                     if success:
                         # Run YOLO inference on the frame
-                        results = model.predict(frame, stream=True, device="cpu")
+                        results = model.predict(frame, stream=True, device="cpu", )
                         for result in results:
                             annotated_frame = result.plot()
-
+                            if result.boxes:
+                                print("Found {} objects".format(len(result.boxes)))
+                                
+                                if (len(result.boxes) > 0):
+                                    if (time.time() - start_time > 5):
+                                        print("Found a gun!")
+                                        count += len(result.boxes)
+                                        start_time = time.time()
+                                    
                             # Display the frame in the same slot for continuous updates
                             frame_display.image(annotated_frame, channels="BGR", width=display_width)
 
@@ -96,6 +104,10 @@ if selectedDevice != "Webcam":
                     else:
                         break
 
+            if (count > 0):
+                print(f"Guns detected: {count}")
+                st.error("Found a gun!")
+
                 # Release resources
                 cap.release()
                 cv2.destroyAllWindows()
@@ -103,3 +115,5 @@ if selectedDevice != "Webcam":
                 st.error("Failed to open video source.")
         else:
             st.warning("Please upload a video file to start.")
+
+st.caption("Made By Zailee Brooks & Isabell Ceja 11/19/2024 ❤")
