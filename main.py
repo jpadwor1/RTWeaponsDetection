@@ -83,7 +83,7 @@ if selectedDevice != "Webcam":
                     success, frame = cap.read()
                     if success:
                         # Run YOLO inference on the frame
-                        results = model.predict(frame, stream=True, device="cpu", )
+                        results = model.predict(frame, stream=True, device="cpu", conf=0.5 )
                         for result in results:
                             annotated_frame = result.plot()
                             if result.boxes:
